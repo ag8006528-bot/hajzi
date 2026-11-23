@@ -1,0 +1,17 @@
+node_modules
+.next
+out
+.vercel
+*.tsbuildinfo
+next-env.d.ts
+
+# Secrets: never commit real environment files (the .env.example template is fine)
+.env
+.env.*
+!.env.example
+
+# Local JSON database, uploads and locks (runtime data, contains customer PII). Root folder only, not src/data.
+/data/
+*.pem
+*.key
+*.log
