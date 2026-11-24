@@ -62,9 +62,8 @@ export const business = {
   maxDaysAhead: 30,
 
   social: {
+    // TODO: put HAJZI's Instagram page here once it exists, e.g. 'https://instagram.com/hajzi'
     instagram: 'https://instagram.com/',
-    facebook: 'https://facebook.com/',
-    tiktok: 'https://tiktok.com/',
   },
 } as const;
 

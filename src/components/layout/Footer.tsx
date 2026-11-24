@@ -5,15 +5,13 @@ import { business } from '@/config/business';
 import { loc } from '@/lib/i18n';
 import { useLang } from '@/lib/i18n/LanguageProvider';
 import { Logo } from './Logo';
-import { FacebookIcon, InstagramIcon, MailIcon, MapPinIcon, TikTokIcon } from '../ui/icons';
+import { InstagramIcon, MailIcon, MapPinIcon } from '../ui/icons';
 
 export function Footer() {
   const { t, lang } = useLang();
   const year = new Date().getFullYear();
   const social = [
     { href: business.social.instagram, label: 'Instagram', Icon: InstagramIcon },
-    { href: business.social.facebook, label: 'Facebook', Icon: FacebookIcon },
-    { href: business.social.tiktok, label: 'TikTok', Icon: TikTokIcon },
   ];
 
   return (
