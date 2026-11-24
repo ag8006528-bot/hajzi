@@ -48,8 +48,8 @@ test('ignores a client-sent price (unknown keys are stripped)', () => {
 test('rejects past dates, closed hours, odd durations and off-grid times', () => {
   const cases: [Record<string, unknown>, string][] = [
     [{ date: addDays(todayISO(), -1) }, 'slotPast'],
-    [{ startMinutes: 9 * 60 }, 'slotRequired'], // 9 AM: closed
-    [{ startMinutes: 25 * 60, durationMinutes: 120 }, 'slotRequired'], // runs past closing
+    [{ startMinutes: 6 * 60 }, 'slotRequired'], // 6 AM: closed (opens 7 AM)
+    [{ startMinutes: 22 * 60, durationMinutes: 120 }, 'slotRequired'], // runs past 11 PM closing
     [{ durationMinutes: 45 }, 'slotRequired'],
     [{ startMinutes: 19 * 60 + 15 }, 'slotRequired'],
     [{ date: addDays(todayISO(), 400) }, 'dateInvalid'],

@@ -31,14 +31,14 @@ export const business = {
   /**
    * Working hours. Times are minutes from midnight of the booking day.
    * A close time above 1440 means "after midnight" (e.g. 26 * 60 = 2:00 AM next day).
-   * TODO: [Working hours] — currently Daily 4:00 PM – 2:00 AM
+   * Bookable window on HAJZI: daily 7:00 AM – 11:00 PM. Fields that close earlier are cut off at their own time.
    */
   hours: {
-    openMinutes: 16 * 60, // 4:00 PM
-    closeMinutes: 26 * 60, // 2:00 AM (next day)
+    openMinutes: 7 * 60, // 7:00 AM
+    closeMinutes: 23 * 60, // 11:00 PM (last 1-hour slot starts at 10:00 PM)
     label: {
-      en: 'Daily 4:00 PM – 2:00 AM',
-      ar: 'يومياً من 4:00 مساءً حتى 2:00 صباحاً',
+      en: 'Daily 7:00 AM – 11:00 PM',
+      ar: 'يومياً من 7:00 صباحاً حتى 11:00 مساءً',
     },
   },
 

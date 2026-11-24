@@ -60,7 +60,7 @@ async function freeSlot(fieldId: string) {
   for (let d = 3; d <= 28; d++) {
     const date = addDays(d);
     const { busy } = await (await req(`/api/availability?fieldId=${fieldId}&date=${date}`)).json();
-    for (let s = 16 * 60; s <= 25 * 60; s += 60)
+    for (let s = 16 * 60; s <= 22 * 60; s += 60)
       if (!busy.some((b: { start: number; duration: number }) => s < b.start + b.duration && b.start < s + 60)) return { date, startMinutes: s };
   }
   throw new Error('no free slot');
