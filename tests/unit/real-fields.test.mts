@@ -20,9 +20,9 @@ after(() => rmSync(dir, { recursive: true, force: true }));
 const opts = () => ({ ref: generateRef(), accessTokenHash: sha256(randomToken()), maxPerPhonePerDay: 5, maxActivePerPhone: 10 });
 const date = addDays(todayISO(), 2);
 
-test('25 real listings: unique ids, valid for the admin form, bookable online with a price', () => {
-  assert.equal(realFields.length, 25);
-  assert.equal(new Set(realFields.map((f) => f.id)).size, 25);
+test('23 real listings: unique ids, valid for the admin form, bookable online with a price', () => {
+  assert.equal(realFields.length, 23);
+  assert.equal(new Set(realFields.map((f) => f.id)).size, 23);
   for (const f of realFields) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { id, createdAt, ...input } = f;
@@ -46,7 +46,7 @@ test('closing times come from the listed opening hours', () => {
   assert.equal(close('mayar-football-pitch'), 21 * 60); // until 9 PM
   assert.equal(close('amman-football-club'), 22 * 60 + 30); // until 10:30 PM
   assert.equal(close('yarmouk-sports-stadiums'), 24 * 60 + 30); // until 12:30 AM
-  assert.equal(close('6-yard-sports-entertainment'), undefined); // open 24 h → site-wide hours
+  assert.equal(close('jo-street-court'), undefined); // open 24 h → site-wide hours
 });
 
 test('a real field can be booked online, but not after it closes', async () => {

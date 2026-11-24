@@ -55,7 +55,7 @@ npm run db:setup
 
 ```
 ✔ Database tables, double-booking protection and security rules are in place
-✔ Loaded 25 fields
+✔ Loaded 23 fields
 Done. The database is ready.
 ```
 
@@ -115,7 +115,7 @@ npx vercel --prod
 
 ## Step 6: Check it works
 
-- [ ] The home page and **All fields** show the 25 fields
+- [ ] The home page and **All fields** show the 23 fields
 - [ ] Create a customer account, book a slot, and see it under **My bookings**
 - [ ] The booking appears in **Admin → Bookings**
 - [ ] Cancel that test booking in Admin

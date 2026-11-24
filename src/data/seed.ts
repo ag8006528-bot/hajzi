@@ -98,13 +98,6 @@ const askHours = { en: 'Ask the field for opening hours', ar: 'اسأل المل
 
 const listings: Listing[] = [
   {
-    name: { en: '6 Yard Sports & Entertainment', ar: '6 يارد للرياضة والترفيه' },
-    google: "6 Yard Sports & Entertainment",
-    area: { en: "Tla'a Al-Ali, Amman", ar: 'تلاع العلي، عمّان' },
-    address: { en: 'Al-Madina Al-Munawwara St, Amman', ar: 'شارع المدينة المنورة، عمّان' },
-    lat: 32.0000473, lng: 35.8745518, phone: '079 666 0022', hours: H24, lit: true, featured: true,
-  },
-  {
     name: { en: 'Mayar Football Pitch', ar: 'ملعب ميار لكرة القدم' },
     google: "Mayar Football Pitch",
     area: { en: "Tla'a Al-Ali, Amman", ar: 'تلاع العلي، عمّان' },
@@ -242,13 +235,6 @@ const listings: Listing[] = [
     area: { en: 'Urjan, Amman', ar: 'عرجان، عمّان' },
     address: { en: 'Yahya Al-Idrisi St, next to Al-Hikma Boys School, Urjan', ar: 'شارع يحيى الإدريسي، بجانب مدارس الحكمة للبنين، عرجان' },
     lat: 31.9808625, lng: 35.9212697, phone: '079 737 7577', hours: until('12 AM', '12 منتصف الليل'), lit: true,
-  },
-  {
-    name: { en: 'First Step Academy & Pitches (FSA)', ar: 'أكاديمية وملاعب الخطوة الأولى (FSA)' },
-    google: "أكاديمية وملاعب الخطوة الاولى (FSA)",
-    area: { en: 'Urjan, Amman', ar: 'عرجان، عمّان' },
-    address: { en: "Khadher Al-Shra'ah St, Urjan (XWP7+4C7)", ar: 'شارع خضر الشرعة، عرجان (XWP7+4C7)' },
-    lat: 31.9852767, lng: 35.9135509, phone: '079 332 2210', hours: askHours, lit: false, kind: 'academy',
   },
   {
     name: { en: 'Arab Community College Pitch', ar: 'ملعب كلية المجتمع العربي' },
