@@ -77,6 +77,15 @@ test('a field switched to "call to book" by an admin refuses online bookings', a
   );
 });
 
+test('WhatsApp defaults to the field owner\'s phone when left empty', () => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { id, createdAt, ...input } = realFields[0];
+  const r = fieldSchema.safeParse({ ...input, phone: '079 123 4567', whatsapp: '' });
+  assert.ok(r.success);
+  if (r.success) assert.equal(r.data.whatsapp, '962791234567');
+  assert.equal(fieldSchema.safeParse({ ...input, whatsapp: '12' }).success, false);
+});
+
 test('a field taking online bookings must have a price', () => {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { id, createdAt, ...input } = realFields[0];

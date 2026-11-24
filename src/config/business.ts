@@ -21,13 +21,12 @@ export const business = {
   coordinates: { lat: 31.9539, lng: 35.9106 },
   mapZoom: 11,
 
-  // TODO: [ENTER PHONE NUMBER] — shown on the site, used for tel: links
+  // NOT shown anywhere on the site (HAJZI's owner keeps their number private; customers call each
+  // FIELD's own phone). Only used by the fictional demo fields in the automated tests.
   phone: '+962 79 000 0000',
-
-  // TODO: [ENTER WhatsApp number] — digits only, international format, no "+"
   whatsapp: '962790000000',
 
-  email: 'HAJZIfootball@gmail.com',
+  email: 'hajzifootball@gmail.com',
 
   /**
    * Working hours. Times are minutes from midnight of the booking day.

@@ -207,7 +207,8 @@ export const fieldSchema = z.object({
     .string()
     .max(30)
     .transform((s) => s.replace(/\D/g, ''))
-    .refine((s) => s.length >= 8 && s.length <= 15, 'Invalid WhatsApp number'),
+    // Empty = use the field's phone number (filled in below).
+    .refine((s) => s === '' || (s.length >= 8 && s.length <= 15), 'Invalid WhatsApp number'),
   size: opt(40),
   surface: z.enum(['natural', 'artificial', 'unknown']),
   lighting: z.boolean(),
@@ -218,7 +219,8 @@ export const fieldSchema = z.object({
   images: z.array(imageUrl).max(8),
   featured: z.boolean(),
 })
-  .refine((f) => !f.onlineBooking || f.pricePerHour > 0, { path: ['pricePerHour'], message: 'Price must be positive for online booking' }) satisfies z.ZodType<FieldInput, unknown>;
+  .refine((f) => !f.onlineBooking || f.pricePerHour > 0, { path: ['pricePerHour'], message: 'Price must be positive for online booking' })
+  .transform((f) => (f.whatsapp ? f : { ...f, whatsapp: normalizePhone(f.phone).replace(/\D/g, '') })) satisfies z.ZodType<FieldInput, unknown>;
 
 /** Fields without onlineBooking set (older data) take online bookings. */
 export const isBookableOnline = (f: { onlineBooking?: boolean; pricePerHour: number }) => f.onlineBooking !== false && f.pricePerHour > 0;
@@ -256,8 +258,9 @@ export function defaultFieldInput(): FieldInput {
     coordinates: { ...business.coordinates },
     pricePerHour: business.prices['5v5'],
     onlineBooking: true,
-    phone: business.phone,
-    whatsapp: business.whatsapp,
+    // Each field shows its OWN owner's phone/WhatsApp; the admin types them in (HAJZI has no public phone).
+    phone: '',
+    whatsapp: '',
     size: '',
     surface: 'artificial',
     lighting: true,
