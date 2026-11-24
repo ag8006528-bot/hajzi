@@ -11,14 +11,15 @@ import type { FieldType } from '@/lib/types';
 export const business = {
   name: 'HAJZI',
 
-  // TODO: [ENTER ADDRESS HERE]
+  /** HAJZI lists fields across the whole city (no single office address). */
   address: {
-    en: 'Mecca Street, Amman, Jordan',
-    ar: 'شارع مكة، عمّان، الأردن',
+    en: 'All over Amman, Jordan',
+    ar: 'في جميع أنحاء عمّان، الأردن',
   },
 
-  // TODO: [ENTER Google Maps coordinates HERE]
-  coordinates: { lat: 31.9744, lng: 35.8656 },
+  /** Centre of Amman: the contact map shows the whole city. */
+  coordinates: { lat: 31.9539, lng: 35.9106 },
+  mapZoom: 11,
 
   // TODO: [ENTER PHONE NUMBER] — shown on the site, used for tel: links
   phone: '+962 79 000 0000',
@@ -26,8 +27,7 @@ export const business = {
   // TODO: [ENTER WhatsApp number] — digits only, international format, no "+"
   whatsapp: '962790000000',
 
-  // TODO: [ENTER EMAIL]
-  email: 'hello@hajzi.example',
+  email: 'HAJZIfootball@gmail.com',
 
   /**
    * Working hours. Times are minutes from midnight of the booking day.
@@ -78,8 +78,9 @@ export const siteUrl = (
 export const telHref = (phone: string) => `tel:${phone.replace(/[^\d+]/g, '')}`;
 export const whatsappHref = (number: string, text?: string) =>
   `https://wa.me/${number.replace(/\D/g, '')}${text ? `?text=${encodeURIComponent(text)}` : ''}`;
-export const mapEmbedSrc = (lat: number, lng: number) =>
-  `https://maps.google.com/maps?q=${lat},${lng}&z=15&output=embed`;
+/** Google Maps embed. `query` (e.g. "Amman, Jordan") shows a whole area instead of a single pin. */
+export const mapEmbedSrc = (lat: number, lng: number, zoom = 15, query?: string) =>
+  `https://maps.google.com/maps?q=${encodeURIComponent(query ?? `${lat},${lng}`)}&z=${zoom}&output=embed`;
 export const mapLink = (lat: number, lng: number) =>
   `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
 

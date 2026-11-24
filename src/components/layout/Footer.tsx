@@ -1,11 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { business, telHref, whatsappHref } from '@/config/business';
+import { business } from '@/config/business';
 import { loc } from '@/lib/i18n';
 import { useLang } from '@/lib/i18n/LanguageProvider';
 import { Logo } from './Logo';
-import { ClockIcon, FacebookIcon, InstagramIcon, MailIcon, MapPinIcon, PhoneIcon, TikTokIcon, WhatsAppIcon } from '../ui/icons';
+import { FacebookIcon, InstagramIcon, MailIcon, MapPinIcon, TikTokIcon } from '../ui/icons';
 
 export function Footer() {
   const { t, lang } = useLang();
@@ -64,18 +64,6 @@ export function Footer() {
           <h2 className="text-sm font-bold uppercase tracking-wider text-white/70">{t.footer.contact}</h2>
           <ul className="mt-4 space-y-3 text-white/90">
             <li className="flex gap-2.5">
-              <PhoneIcon className="mt-0.5 shrink-0 text-card" width={18} height={18} />
-              <a href={telHref(business.phone)} dir="ltr" className="hover:text-card">
-                {business.phone}
-              </a>
-            </li>
-            <li className="flex gap-2.5">
-              <WhatsAppIcon className="mt-0.5 shrink-0 text-card" width={18} height={18} />
-              <a href={whatsappHref(business.whatsapp)} target="_blank" rel="noopener noreferrer" className="hover:text-card">
-                WhatsApp
-              </a>
-            </li>
-            <li className="flex gap-2.5">
               <MailIcon className="mt-0.5 shrink-0 text-card" width={18} height={18} />
               <a href={`mailto:${business.email}`} className="break-all hover:text-card">
                 {business.email}
@@ -84,10 +72,6 @@ export function Footer() {
             <li className="flex gap-2.5">
               <MapPinIcon className="mt-0.5 shrink-0 text-card" width={18} height={18} />
               <span>{loc(business.address, lang)}</span>
-            </li>
-            <li className="flex gap-2.5">
-              <ClockIcon className="mt-0.5 shrink-0 text-card" width={18} height={18} />
-              <span>{loc(business.hours.label, lang)}</span>
             </li>
           </ul>
         </div>

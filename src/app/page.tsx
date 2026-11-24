@@ -26,10 +26,9 @@ export default async function HomePage() {
     '@type': 'SportsActivityLocation',
     name: business.name,
     url: siteUrl,
-    telephone: business.phone,
     email: business.email,
-    address: business.address.en,
-    geo: { '@type': 'GeoCoordinates', latitude: business.coordinates.lat, longitude: business.coordinates.lng },
+    areaServed: { '@type': 'City', name: 'Amman', containedInPlace: { '@type': 'Country', name: 'Jordan' } },
+    address: { '@type': 'PostalAddress', addressLocality: 'Amman', addressCountry: 'JO' },
   };
 
   return (

@@ -1,7 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { business, mapLink, telHref, whatsappHref } from '@/config/business';
+import { business } from '@/config/business';
 import { loc } from '@/lib/i18n';
 import { useLang } from '@/lib/i18n/LanguageProvider';
 import { isValidPhone } from '@/lib/validation';
@@ -9,17 +9,14 @@ import { MapEmbed } from '../fields/MapEmbed';
 import { FadeIn } from '../ui/FadeIn';
 import { Honeypot, Turnstile, type TurnstileHandle } from '../ui/BotProtection';
 import { FormField } from '../ui/FormField';
-import { CheckIcon, ClockIcon, MailIcon, MapPinIcon, PhoneIcon, SpinnerIcon, WhatsAppIcon } from '../ui/icons';
+import { CheckIcon, MailIcon, MapPinIcon, SpinnerIcon } from '../ui/icons';
 import { CenterCircle } from '../ui/PitchDecor';
 
 export function ContactView() {
   const { t, lang } = useLang();
 
   const cards = [
-    { Icon: PhoneIcon, title: t.contact.phone, value: business.phone, href: telHref(business.phone), ltr: true },
-    { Icon: WhatsAppIcon, title: t.contact.whatsapp, value: t.contact.whatsappCta, href: whatsappHref(business.whatsapp), external: true },
-    { Icon: MailIcon, title: t.contact.email, value: business.email, href: `mailto:${business.email}`, ltr: true },
-    { Icon: ClockIcon, title: t.contact.hours, value: loc(business.hours.label, lang) },
+    { Icon: MailIcon, title: t.contact.email, value: business.email, href: `mailto:${business.email}`, ltr: true, external: false },
   ];
 
   return (
@@ -33,7 +30,7 @@ export function ContactView() {
       </section>
 
       <div className="mx-auto max-w-6xl px-4 py-10">
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <ul className="grid max-w-md gap-4">
           {cards.map(({ Icon, title, value, href, ltr, external }, i) => {
             const inner = (
               <>
@@ -75,8 +72,14 @@ export function ContactView() {
               <MapPinIcon className="mt-0.5 shrink-0 text-card" />
               {loc(business.address, lang)}
             </p>
-            <MapEmbed lat={business.coordinates.lat} lng={business.coordinates.lng} title={`${t.contact.location} — HAJZI`} />
-            <a href={mapLink(business.coordinates.lat, business.coordinates.lng)} target="_blank" rel="noopener noreferrer" className="btn-outline">
+            <MapEmbed
+              lat={business.coordinates.lat}
+              lng={business.coordinates.lng}
+              zoom={business.mapZoom}
+              query="Amman, Jordan"
+              title={`${t.contact.location} — HAJZI`}
+            />
+            <a href="https://www.google.com/maps/search/?api=1&query=Amman%2C%20Jordan" target="_blank" rel="noopener noreferrer" className="btn-outline">
               <MapPinIcon width={18} height={18} />
               {t.field.directions}
             </a>

@@ -8,7 +8,12 @@ import { useLang } from '@/lib/i18n/LanguageProvider';
  */
 export function Honeypot({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
-    <div aria-hidden="true" style={{ position: 'absolute', left: '-10000px', width: 1, height: 1, overflow: 'hidden' }}>
+    // Hidden by clipping, not by pushing it off-screen: a far-left position makes right-to-left (Arabic)
+    // pages scroll sideways by 10,000px.
+    <div
+      aria-hidden="true"
+      style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clipPath: 'inset(50%)', whiteSpace: 'nowrap', opacity: 0, pointerEvents: 'none' }}
+    >
       <label htmlFor="hp-website">Website</label>
       <input id="hp-website" name="website" type="text" tabIndex={-1} autoComplete="off" value={value} onChange={(e) => onChange(e.target.value)} />
     </div>
