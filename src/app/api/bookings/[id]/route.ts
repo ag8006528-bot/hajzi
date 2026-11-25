@@ -1,4 +1,4 @@
-import { requirePermission } from '@/lib/auth';
+import { canAccessField, requirePermission } from '@/lib/auth';
 import { getStore, SlotTakenError } from '@/lib/db';
 import { audit } from '@/lib/logger';
 import { toBookingView } from '@/lib/retention';
@@ -17,6 +17,9 @@ export const PATCH = route<Ctx>(async (req, { params }) => {
   if (!id.success) return fail('Not found', 404);
   const body = await parseJson(req, statusSchema);
   if (!body.ok) return body.res;
+  // Field owners can only change bookings for their own field (same "not found" so ids can't be probed).
+  const existing = await getStore().getBookingById(id.data);
+  if (!existing || !canAccessField(auth.user, existing.fieldId)) return fail('Not found', 404);
   try {
     const updated = await getStore().setBookingStatus(id.data, body.data.status);
     if (!updated) return fail('Not found', 404);

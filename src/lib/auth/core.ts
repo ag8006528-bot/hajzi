@@ -87,16 +87,31 @@ export async function hashPassword(password: string, minLength = MIN_PASSWORD_LE
   return bcrypt.hash(password, BCRYPT_COST);
 }
 
-export const toPublicUser = (u: User): PublicUser => ({ id: u.id, email: u.email, name: u.name, role: u.role, totpEnabled: u.totpEnabled });
+export const toPublicUser = (u: User): PublicUser => ({
+  id: u.id,
+  email: u.email,
+  name: u.name,
+  role: u.role,
+  totpEnabled: u.totpEnabled,
+  ...(u.role === 'owner' ? { fieldIds: u.fieldIds ?? [] } : {}),
+  ...(u.mustChangePassword ? { mustChangePassword: true } : {}),
+});
+
+/** Field-level access: admins and staff see every field; an owner only their own. Always checked server-side. */
+export const canAccessField = (u: User, fieldId: string) => u.role !== 'owner' || (u.fieldIds ?? []).includes(fieldId);
 
 /** Role permissions. Staff can run day-to-day bookings; only admins change fields or read the audit log. */
 export const permissions = {
-  viewBookings: (r: Role) => r === 'admin' || r === 'staff',
-  manageBookings: (r: Role) => r === 'admin' || r === 'staff',
-  manageBlocks: (r: Role) => r === 'admin' || r === 'staff',
+  // Owners get these too, but only for their own fields (canAccessField in each route).
+  viewBookings: (r: Role) => r === 'admin' || r === 'staff' || r === 'owner',
+  manageBookings: (r: Role) => r === 'admin' || r === 'staff' || r === 'owner',
+  manageBlocks: (r: Role) => r === 'admin' || r === 'staff' || r === 'owner',
+  editOwnField: (r: Role) => r === 'admin' || r === 'owner',
+  uploadImages: (r: Role) => r === 'admin' || r === 'owner',
+  // Admin/staff only:
   viewMessages: (r: Role) => r === 'admin' || r === 'staff',
   manageFields: (r: Role) => r === 'admin',
-  uploadImages: (r: Role) => r === 'admin',
+  manageOwners: (r: Role) => r === 'admin',
   viewAudit: (r: Role) => r === 'admin',
 };
 export type Permission = keyof typeof permissions;
@@ -133,7 +148,7 @@ export async function authenticate(input: { email: string; password: string; tot
   const email = input.email.trim().toLowerCase();
   const user = await store.getUserByEmail(email);
 
-  if (!user) {
+  if (!user || user.disabled) {
     await bcrypt.compare(input.password, await getDummyHash());
     await audit('anonymous', 'login_failed', email, { reason: 'unknown_user', ip: ipHash });
     return { ok: false, reason: 'invalid' };
@@ -200,7 +215,8 @@ export async function userFromSessionToken(token: string): Promise<User | null> 
     await store.deleteSession(session.id);
     return null;
   }
-  return store.getUserById(session.userId);
+  const user = await store.getUserById(session.userId);
+  return user && !user.disabled ? user : null;
 }
 
 export async function destroySession(token: string) {
@@ -233,4 +249,74 @@ export async function disableTotp(user: User, password: string, code: string) {
   await getStore().updateUser(user.id, { totpEnabled: false, totpSecretEnc: undefined, totpLastStep: undefined });
   await audit(user.email, 'totp_disabled', user.email);
   return true;
+}
+
+/* ───── Field owner accounts (created by an admin) ───── */
+
+/** Readable temporary password (no look-alike characters), e.g. "Kp7m-Xw3r-Tq9n". */
+function temporaryPassword() {
+  const alphabet = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  const bytes = randomToken(24);
+  let out = '';
+  for (let i = 0; out.replace(/-/g, '').length < 12; i++) out += alphabet[bytes.charCodeAt(i) % alphabet.length];
+  return out.replace(/(.{4})(?=.)/g, '$1-');
+}
+
+export type OwnerResult = { ok: true; user: User; tempPassword: string } | { ok: false; reason: 'exists' | 'no_fields' };
+
+/** Admin creates a field-owner account. Returns a one-time temporary password to give to the owner. */
+export async function createOwnerAccount(admin: User, input: { email: string; name: string; fieldIds: string[] }): Promise<OwnerResult> {
+  const store = getStore();
+  const email = input.email.trim().toLowerCase();
+  const existing = (await store.listFields()).map((f) => f.id);
+  const fieldIds = Array.from(new Set(input.fieldIds)).filter((id) => existing.includes(id));
+  if (fieldIds.length === 0) return { ok: false, reason: 'no_fields' };
+  const prev = await store.getUserByEmail(email);
+  if (prev && !prev.disabled) return { ok: false, reason: 'exists' };
+
+  const tempPassword = temporaryPassword();
+  const passwordHash = await hashPassword(tempPassword);
+  let user: User;
+  if (prev) {
+    // Re-activate a previously removed account with the same email.
+    user = (await store.updateUser(prev.id, {
+      role: 'owner', name: input.name || prev.name, fieldIds, passwordHash, disabled: undefined,
+      mustChangePassword: true, failedAttempts: 0, lockedUntil: undefined,
+      totpEnabled: false, totpSecretEnc: undefined, totpPendingEnc: undefined,
+    }))!;
+  } else {
+    user = await store.createUser({
+      id: randomUUID(), email, name: input.name || email.split('@')[0], role: 'owner', fieldIds,
+      passwordHash, totpEnabled: false, failedAttempts: 0, mustChangePassword: true, createdAt: new Date().toISOString(),
+    });
+  }
+  await audit(admin.email, 'owner_created', email, { fields: fieldIds.join(',') });
+  return { ok: true, user, tempPassword };
+}
+
+/** Admin removes a field owner: they can no longer log in and every session is revoked. */
+export async function disableOwner(admin: User, ownerId: string) {
+  const store = getStore();
+  const u = await store.getUserById(ownerId);
+  if (!u || u.role !== 'owner') return false;
+  await store.updateUser(u.id, { disabled: true, passwordHash: await bcrypt.hash(randomToken(32), BCRYPT_COST) });
+  await store.deleteUserSessions(u.id);
+  await audit(admin.email, 'owner_removed', u.email);
+  return true;
+}
+
+export type PasswordChangeResult = { ok: true } | { ok: false; reason: 'wrong_password' | 'short' | 'weak' | 'same' };
+
+/** Any staff user changes their own password (required for owners after their first login). */
+export async function changeOwnPassword(user: User, current: string, next: string): Promise<PasswordChangeResult> {
+  if (!(await bcrypt.compare(current, user.passwordHash))) {
+    await audit(user.email, 'password_change_failed', user.email, { reason: 'wrong_password' });
+    return { ok: false, reason: 'wrong_password' };
+  }
+  if (current === next) return { ok: false, reason: 'same' };
+  const weak = passwordProblem(next);
+  if (weak) return { ok: false, reason: weak };
+  await getStore().updateUser(user.id, { passwordHash: await hashPassword(next), mustChangePassword: undefined });
+  await audit(user.email, 'password_changed', user.email);
+  return { ok: true };
 }

@@ -80,7 +80,8 @@ export interface Booking {
 /** What admin/staff APIs return: never the token hash, phone masked unless explicitly revealed. */
 export type BookingView = Omit<Booking, 'accessTokenHash'>;
 
-export type Role = 'admin' | 'staff';
+/** admin: everything · staff: day-to-day bookings · owner: a field owner, ONLY their own field(s). */
+export type Role = 'admin' | 'staff' | 'owner';
 
 export interface User {
   id: string;
@@ -100,6 +101,12 @@ export interface User {
   lastLoginAt?: string;
   /** SHA-256 of the one-time setup code used to create this account (makes each code single-use). */
   setupCodeHash?: string;
+  /** Field owners (role 'owner'): the field ids they manage. Every API checks it on the server. */
+  fieldIds?: string[];
+  /** Removed accounts can't log in (kept for the audit trail). */
+  disabled?: boolean;
+  /** Set when an admin created the account with a temporary password. */
+  mustChangePassword?: boolean;
 }
 
 /** Safe user shape for the browser. */
@@ -109,6 +116,8 @@ export interface PublicUser {
   name: string;
   role: Role;
   totpEnabled: boolean;
+  fieldIds?: string[];
+  mustChangePassword?: boolean;
 }
 
 /** Customer account (separate from staff — a customer session can never open the admin area). */

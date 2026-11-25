@@ -30,7 +30,7 @@ export function AvailabilityTab({ fields }: { fields: Field[] }) {
     const block = busy.find((b) => b.kind === 'block' && b.start === s);
     setWorking(s);
     const res = block
-      ? await fetch(`/api/blocks?id=${block.blockId}`, { method: 'DELETE' })
+      ? await fetch(`/api/blocks?id=${block.blockId}&fieldId=${encodeURIComponent(fieldId)}&date=${date}`, { method: 'DELETE' })
       : await fetch('/api/blocks', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

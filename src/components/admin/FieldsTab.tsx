@@ -9,7 +9,7 @@ import { TypeBadge } from '../fields/TypeBadge';
 import { EditIcon, PlusIcon, TrashIcon } from '../ui/icons';
 import { FieldForm } from './FieldForm';
 
-export function FieldsTab({ fields, onChange }: { fields: Field[]; onChange: (f: Field[]) => void }) {
+export function FieldsTab({ fields, onChange, ownerMode = false }: { fields: Field[]; onChange: (f: Field[]) => void; ownerMode?: boolean }) {
   const { t, lang } = useLang();
   const [editing, setEditing] = useState<{ id: string | null; data: FieldInput } | null>(null);
 
@@ -27,10 +27,14 @@ export function FieldsTab({ fields, onChange }: { fields: Field[]; onChange: (f:
 
   return (
     <div>
-      <button type="button" className="btn-primary" onClick={() => setEditing({ id: null, data: defaultFieldInput() })}>
-        <PlusIcon width={18} height={18} />
-        {t.admin.addField}
-      </button>
+      {ownerMode ? (
+        <p className="text-white/85">{t.admin.owners.myFieldHelp}</p>
+      ) : (
+        <button type="button" className="btn-primary" onClick={() => setEditing({ id: null, data: defaultFieldInput() })}>
+          <PlusIcon width={18} height={18} />
+          {t.admin.addField}
+        </button>
+      )}
 
       <ul className="mt-5 grid gap-4 md:grid-cols-2">
         {fields.map((f) => {
@@ -60,21 +64,21 @@ export function FieldsTab({ fields, onChange }: { fields: Field[]; onChange: (f:
                 >
                   <EditIcon width={18} height={18} />
                 </button>
-                <button
+                {!ownerMode && <button
                   type="button"
                   onClick={() => remove(f)}
                   className="grid h-10 w-10 place-items-center rounded-full text-red-700 hover:bg-red-50"
                   aria-label={`${t.admin.delete}: ${loc(f.name, lang)}`}
                 >
                   <TrashIcon width={18} height={18} />
-                </button>
+                </button>}
               </div>
             </li>
           );
         })}
       </ul>
 
-      {editing && <FieldForm id={editing.id} initial={editing.data} onClose={() => setEditing(null)} onSaved={saved} />}
+      {editing && <FieldForm id={editing.id} initial={editing.data} onClose={() => setEditing(null)} onSaved={saved} ownerMode={ownerMode} />}
     </div>
   );
 }

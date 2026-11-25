@@ -11,11 +11,14 @@ export function FieldForm({
   initial,
   onClose,
   onSaved,
+  ownerMode = false,
 }: {
   id: string | null;
   initial: FieldInput;
   onClose: () => void;
   onSaved: (f: Field) => void;
+  /** Field owners: only the settings they may change (the server enforces the same list). */
+  ownerMode?: boolean;
 }) {
   const { t } = useLang();
   const f = t.admin.form;
@@ -97,9 +100,9 @@ export function FieldForm({
           </button>
         </div>
         <div className="grid gap-4 p-5 sm:grid-cols-2">
-          {text(f.nameEn, v.name.en, (s) => setLoc('name', 'en', s), { id: 'ff-name-en', required: true, dir: 'ltr' })}
-          {text(f.nameAr, v.name.ar, (s) => setLoc('name', 'ar', s), { id: 'ff-name-ar', required: true, dir: 'rtl' })}
-          <div>
+          {!ownerMode && text(f.nameEn, v.name.en, (s) => setLoc('name', 'en', s), { id: 'ff-name-en', required: true, dir: 'ltr' })}
+          {!ownerMode && text(f.nameAr, v.name.ar, (s) => setLoc('name', 'ar', s), { id: 'ff-name-ar', required: true, dir: 'rtl' })}
+          <div className={ownerMode ? 'hidden' : ''}>
             <label htmlFor="ff-type" className="label">
               {f.type}
             </label>
@@ -136,11 +139,11 @@ export function FieldForm({
               onChange={(e) => set('pricePerHour', Number(e.target.value))}
             />
           </div>
-          {text(f.areaEn, v.area.en, (s) => setLoc('area', 'en', s), { id: 'ff-area-en', required: true, dir: 'ltr' })}
-          {text(f.areaAr, v.area.ar, (s) => setLoc('area', 'ar', s), { id: 'ff-area-ar', dir: 'rtl' })}
+          {!ownerMode && text(f.areaEn, v.area.en, (s) => setLoc('area', 'en', s), { id: 'ff-area-en', required: true, dir: 'ltr' })}
+          {!ownerMode && text(f.areaAr, v.area.ar, (s) => setLoc('area', 'ar', s), { id: 'ff-area-ar', dir: 'rtl' })}
           {text(f.addressEn, v.address.en, (s) => setLoc('address', 'en', s), { id: 'ff-addr-en', dir: 'ltr' })}
           {text(f.addressAr, v.address.ar, (s) => setLoc('address', 'ar', s), { id: 'ff-addr-ar', dir: 'rtl' })}
-          <div>
+          <div className={ownerMode ? 'hidden' : ''}>
             <label htmlFor="ff-lat" className="label">
               {f.lat}
             </label>
@@ -153,7 +156,7 @@ export function FieldForm({
               onChange={(e) => set('coordinates', { ...v.coordinates, lat: Number(e.target.value) })}
             />
           </div>
-          <div>
+          <div className={ownerMode ? 'hidden' : ''}>
             <label htmlFor="ff-lng" className="label">
               {f.lng}
             </label>
@@ -169,7 +172,7 @@ export function FieldForm({
           {text(f.phone, v.phone, (s) => set('phone', s), { id: 'ff-phone', required: true, dir: 'ltr' })}
           {text(f.whatsapp, v.whatsapp, (s) => set('whatsapp', s), { id: 'ff-wa', dir: 'ltr' })}
           {text(f.size, v.size, (s) => set('size', s), { id: 'ff-size', dir: 'ltr' })}
-          {text(f.mapsQuery, v.mapsQuery ?? '', (s) => set('mapsQuery', s), { id: 'ff-maps' })}
+          {!ownerMode && text(f.mapsQuery, v.mapsQuery ?? '', (s) => set('mapsQuery', s), { id: 'ff-maps' })}
           <div>
             <label htmlFor="ff-surface" className="label">
               {f.surface}
@@ -203,11 +206,11 @@ export function FieldForm({
               <input type="checkbox" className="h-4 w-4 accent-pitch" checked={v.lighting} onChange={(e) => set('lighting', e.target.checked)} />
               {f.lighting}
             </label>
-            <label className="inline-flex items-center gap-2 text-sm font-semibold">
+            <label className={`inline-flex items-center gap-2 text-sm font-semibold ${ownerMode ? 'hidden' : ''}`}>
               <input type="checkbox" className="h-4 w-4 accent-pitch" checked={v.featured} onChange={(e) => set('featured', e.target.checked)} />
               {f.featured}
             </label>
-            <label className="inline-flex items-center gap-2 text-sm font-semibold">
+            <label className={`inline-flex items-center gap-2 text-sm font-semibold ${ownerMode ? 'hidden' : ''}`}>
               <input
                 type="checkbox"
                 className="h-4 w-4 accent-pitch"

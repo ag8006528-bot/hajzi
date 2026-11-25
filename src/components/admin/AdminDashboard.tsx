@@ -10,8 +10,9 @@ import { AvailabilityTab } from './AvailabilityTab';
 import { BookingsTab } from './BookingsTab';
 import { FieldsTab } from './FieldsTab';
 import { MessagesTab } from './MessagesTab';
+import { OwnersTab } from './OwnersTab';
 
-type Tab = 'bookings' | 'fields' | 'availability' | 'messages' | 'activity' | 'account';
+type Tab = 'bookings' | 'fields' | 'myfield' | 'availability' | 'owners' | 'messages' | 'activity' | 'account';
 
 /**
  * Tabs are shown per role for convenience only — every action is ALSO enforced
@@ -20,9 +21,11 @@ type Tab = 'bookings' | 'fields' | 'availability' | 'messages' | 'activity' | 'a
 export function AdminDashboard({ initialFields, user }: { initialFields: Field[]; user: PublicUser }) {
   const { t } = useLang();
   const router = useRouter();
-  const [tab, setTab] = useState<Tab>('bookings');
+  // Owners who still have the admin's temporary password start on the Account tab to change it.
+  const [tab, setTab] = useState<Tab>(user.mustChangePassword ? 'account' : 'bookings');
   const [fields, setFields] = useState(initialFields);
   const isAdmin = user.role === 'admin';
+  const isOwner = user.role === 'owner';
 
   const logout = async () => {
     await fetch('/api/admin/logout', { method: 'POST' });
@@ -31,8 +34,10 @@ export function AdminDashboard({ initialFields, user }: { initialFields: Field[]
   };
 
   const tabs: Tab[] = isAdmin
-    ? ['bookings', 'fields', 'availability', 'messages', 'activity', 'account']
-    : ['bookings', 'availability', 'messages', 'account'];
+    ? ['bookings', 'fields', 'availability', 'owners', 'messages', 'activity', 'account']
+    : isOwner
+      ? ['bookings', 'availability', 'myfield', 'account']
+      : ['bookings', 'availability', 'messages', 'account'];
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8">
@@ -67,8 +72,10 @@ export function AdminDashboard({ initialFields, user }: { initialFields: Field[]
       <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`} className="mt-6">
         {tab === 'bookings' && <BookingsTab fields={fields} />}
         {tab === 'fields' && isAdmin && <FieldsTab fields={fields} onChange={setFields} />}
+        {tab === 'myfield' && isOwner && <FieldsTab fields={fields} onChange={setFields} ownerMode />}
+        {tab === 'owners' && isAdmin && <OwnersTab fields={fields} />}
         {tab === 'availability' && <AvailabilityTab fields={fields} />}
-        {tab === 'messages' && <MessagesTab />}
+        {tab === 'messages' && !isOwner && <MessagesTab />}
         {tab === 'activity' && isAdmin && <ActivityTab />}
         {tab === 'account' && <AccountTab user={user} />}
       </div>

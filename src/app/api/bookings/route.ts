@@ -1,4 +1,4 @@
-import { getCurrentCustomer, requirePermission } from '@/lib/auth';
+import { canAccessField, getCurrentCustomer, requirePermission } from '@/lib/auth';
 import { getStore, NotFoundError, PhoneLimitError, SlotTakenError } from '@/lib/db';
 import { env } from '@/lib/env';
 import { audit, log } from '@/lib/logger';
@@ -90,7 +90,9 @@ export const GET = route(async (req) => {
   if (limited) return limited;
   const q = bookingFilterQuery.safeParse(queryObject(new URL(req.url).searchParams));
   if (!q.success) return fail('Invalid filters');
+  // Field owners: only bookings for THEIR field(s), whatever filters they send.
+  if (q.data.fieldId && !canAccessField(auth.user, q.data.fieldId)) return fail('Forbidden', 403);
   void maybeRunRetention();
-  const bookings = await getStore().listBookings(q.data);
+  const bookings = (await getStore().listBookings(q.data)).filter((b) => canAccessField(auth.user, b.fieldId));
   return json({ bookings: bookings.map(toBookingView) });
 });

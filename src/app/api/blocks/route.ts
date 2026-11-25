@@ -1,4 +1,4 @@
-import { requirePermission } from '@/lib/auth';
+import { canAccessField, requirePermission } from '@/lib/auth';
 import { isWithinHours, SLOT_MINUTES } from '@/lib/booking';
 import { getStore, SlotTakenError } from '@/lib/db';
 import { audit } from '@/lib/logger';
@@ -20,6 +20,7 @@ export const GET = route(async (req) => {
   if ('res' in auth) return auth.res;
   const q = availabilityQuery.safeParse(queryObject(new URL(req.url).searchParams));
   if (!q.success) return fail('fieldId and date are required');
+  if (!canAccessField(auth.user, q.data.fieldId)) return fail('Forbidden', 403);
   return json({ busy: await getStore().getBusy(q.data.fieldId, q.data.date) });
 });
 
@@ -30,6 +31,7 @@ export const POST = route(async (req) => {
   const body = await parseJson(req, blockSchema);
   if (!body.ok) return body.res;
   const { fieldId, date, startMinutes } = body.data;
+  if (!canAccessField(auth.user, fieldId)) return fail('Forbidden', 403);
   if (!isWithinHours(startMinutes, SLOT_MINUTES)) return fail('Invalid slot');
   const store = getStore();
   if (!(await store.getField(fieldId))) return fail('Not found', 404);
@@ -48,6 +50,12 @@ export const DELETE = route(async (req) => {
   if ('res' in auth) return auth.res;
   const id = uuidSchema.safeParse(new URL(req.url).searchParams.get('id'));
   if (!id.success) return fail('Not found', 404);
+  // Field owners: the block must belong to one of their fields (checked BEFORE removing it).
+  if (auth.user.role === 'owner') {
+    const q = availabilityQuery.safeParse(queryObject(new URL(req.url).searchParams));
+    if (!q.success || !canAccessField(auth.user, q.data.fieldId)) return fail('Not found', 404);
+    if (!(await getStore().listBlocks(q.data.fieldId, q.data.date)).some((b) => b.id === id.data)) return fail('Not found', 404);
+  }
   const block = await getStore().removeBlock(id.data);
   if (!block) return fail('Not found', 404);
   await audit(auth.user.email, 'slot_unblocked', block.fieldId, { date: block.date, start: block.startMinutes });

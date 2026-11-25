@@ -269,3 +269,26 @@ export function defaultFieldInput(): FieldInput {
     featured: false,
   };
 }
+
+/* ───── Field owner accounts ───── */
+
+export const ownerCreateSchema = z.object({
+  email: z.string().trim().toLowerCase().max(254).email('email'),
+  name: z
+    .string()
+    .max(160)
+    .transform((s) => cleanText(s, 80))
+    .default(''),
+  fieldIds: z.array(idSchema).min(1, 'no_fields').max(10),
+});
+
+export const passwordChangeSchema = z.object({
+  current: z.string().min(1).max(200),
+  next: z.string().min(1).max(200),
+});
+
+/** Fields an OWNER may change on their own field (name, id, listing flags etc. stay admin-only). */
+export const OWNER_EDITABLE_FIELD_KEYS = [
+  'description', 'pricePerHour', 'priceEstimated', 'phone', 'whatsapp', 'size', 'surface',
+  'lighting', 'amenities', 'images', 'closeMinutes', 'address',
+] as const;

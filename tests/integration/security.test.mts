@@ -316,3 +316,60 @@ test('uploads: content sniffing, EXIF stripping, random names, no path traversal
   assert.equal((await req('/api/uploads/..%2F..%2F.env.local')).status, 404);
   assert.equal((await req('/api/uploads/x.svg')).status, 404);
 });
+
+/* ───────── Field owner accounts ───────── */
+
+test('field owners only ever see and change their OWN field', async () => {
+  const admin = await login(env('HAJZI_TEST_ADMIN_EMAIL'), env('HAJZI_TEST_ADMIN_PASSWORD'));
+  const email = `owner-${Date.now()}@example.com`;
+  const created = await postJson('/api/admin/owners', { email, name: 'Test Owner', fieldIds: ['golden-boot-stadium'] }, { cookie: admin.cookie });
+  assert.equal(created.status, 201);
+  const { tempPassword, owner } = await created.json();
+  const { cookie } = await login(email, tempPassword);
+
+  // A booking on ANOTHER field, made by a customer.
+  const customer = await customerLogin();
+  const other = await postJson('/api/bookings', booking({ fieldId: 'corner-flag-park', ...(await freeSlot('corner-flag-park')) }), { cookie: customer.cookie });
+  assert.equal(other.status, 201);
+  const staffList = await (await req('/api/bookings?fieldId=corner-flag-park', { cookie: admin.cookie })).json();
+  const otherId = staffList.bookings[0].id;
+
+  // Bookings: only their field.
+  const mine = await (await req('/api/bookings', { cookie })).json();
+  assert.ok(mine.bookings.every((b: { fieldId: string }) => b.fieldId === 'golden-boot-stadium'));
+  assert.equal((await req('/api/bookings?fieldId=corner-flag-park', { cookie })).status, 403);
+  assert.equal((await postJson(`/api/bookings/${otherId}`, { status: 'cancelled' }, { cookie, method: 'PATCH' })).status, 404);
+  assert.equal((await req(`/api/bookings/${otherId}/phone`, { cookie })).status, 404);
+
+  // Blocked times: only their field.
+  const date = addDays(9);
+  assert.equal((await req(`/api/blocks?fieldId=corner-flag-park&date=${date}`, { cookie })).status, 403);
+  assert.equal((await postJson('/api/blocks', { fieldId: 'corner-flag-park', date, startMinutes: 17 * 60 }, { cookie })).status, 403);
+  const blk = await postJson('/api/blocks', { fieldId: 'golden-boot-stadium', date, startMinutes: 17 * 60 }, { cookie });
+  assert.equal(blk.status, 201);
+  const blockId = (await blk.json()).block.id;
+  assert.equal((await req(`/api/blocks?id=${blockId}&fieldId=golden-boot-stadium&date=${date}`, { cookie, method: 'DELETE' })).status, 200);
+
+  // Field details: own field only, and only owner-editable settings.
+  const field = (await (await req('/api/fields/golden-boot-stadium')).json()).field;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { id: _i, createdAt: _c, ...input } = field;
+  assert.equal((await postJson('/api/fields/corner-flag-park', input, { cookie, method: 'PUT' })).status, 404);
+  const upd = await postJson('/api/fields/golden-boot-stadium', { ...input, pricePerHour: 90, name: { en: 'Hacked', ar: 'Hacked' }, featured: false }, { cookie, method: 'PUT' });
+  assert.equal(upd.status, 200);
+  const after = (await upd.json()).field;
+  assert.equal(after.pricePerHour, 90, 'owner can change the price');
+  assert.equal(after.name.en, field.name.en, 'owner cannot rename the field');
+  assert.equal(after.featured, field.featured, 'owner cannot change listing flags');
+  // Restore the price for the other tests.
+  assert.equal((await postJson('/api/fields/golden-boot-stadium', input, { cookie: admin.cookie, method: 'PUT' })).status, 200);
+
+  // Admin-only areas.
+  for (const path of ['/api/admin/messages', '/api/admin/audit', '/api/admin/owners']) assert.equal((await req(path, { cookie })).status, 403, path);
+  assert.equal((await req('/api/fields/golden-boot-stadium', { cookie, method: 'DELETE' })).status, 403);
+  assert.equal((await postJson('/api/fields', input, { cookie })).status, 403);
+
+  // Removing the owner ends their access immediately.
+  assert.equal((await req(`/api/admin/owners?id=${owner.id}`, { cookie: admin.cookie, method: 'DELETE' })).status, 200);
+  assert.equal((await req('/api/bookings', { cookie })).status, 401);
+});

@@ -1,4 +1,4 @@
-import { requirePermission } from '@/lib/auth';
+import { canAccessField, requirePermission } from '@/lib/auth';
 import { getStore } from '@/lib/db';
 import { audit } from '@/lib/logger';
 import { fail, json, limit, route } from '@/lib/security/request';
@@ -15,7 +15,7 @@ export const GET = route<Ctx>(async (req, { params }) => {
   const id = uuidSchema.safeParse((await params).id);
   if (!id.success) return fail('Not found', 404);
   const b = await getStore().getBookingById(id.data);
-  if (!b || !b.phone) return fail('Not found', 404);
+  if (!b || !b.phone || !canAccessField(auth.user, b.fieldId)) return fail('Not found', 404);
   await audit(auth.user.email, 'phone_revealed', b.ref);
   return json({ phone: b.phone });
 });

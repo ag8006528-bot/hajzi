@@ -48,7 +48,9 @@ export function AccountTab({ user }: { user: PublicUser }) {
   };
 
   return (
-    <section className="panel max-w-2xl p-6" aria-labelledby="twofa-title">
+    <div className="grid max-w-2xl gap-6">
+    <ChangePassword mustChange={Boolean(user.mustChangePassword)} />
+    <section className="panel p-6" aria-labelledby="twofa-title">
       <h2 id="twofa-title" className="flex items-center gap-2 text-xl font-bold">
         <LockIcon className="text-pitch" /> {a.title}
       </h2>
@@ -120,6 +122,61 @@ export function AccountTab({ user }: { user: PublicUser }) {
         </form>
       )}
 
+      {msg && (
+        <p role="status" className={`mt-4 rounded-xl p-3 text-sm font-semibold ${msg.ok ? 'bg-pitch/10 text-pitch-dark' : 'bg-red-50 text-red-800'}`}>
+          {msg.text}
+        </p>
+      )}
+    </section>
+    </div>
+  );
+}
+
+/** Change your own password (owners get a temporary one from the admin and must change it). */
+function ChangePassword({ mustChange }: { mustChange: boolean }) {
+  const { t } = useLang();
+  const p = t.admin.pwChange;
+  const router = useRouter();
+  const [v, setV] = useState({ current: '', next: '', confirm: '' });
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMsg(null);
+    if (v.next !== v.confirm) return setMsg({ ok: false, text: p.mismatch });
+    setBusy(true);
+    const res = await fetch('/api/admin/password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ current: v.current, next: v.next }),
+    }).catch(() => null);
+    setBusy(false);
+    const data = await res?.json().catch(() => ({}));
+    if (res?.ok) {
+      setV({ current: '', next: '', confirm: '' });
+      setMsg({ ok: true, text: p.done });
+      router.refresh();
+    } else {
+      setMsg({ ok: false, text: (p.errors as Record<string, string>)[data?.code] ?? p.errors.generic });
+    }
+  };
+
+  return (
+    <section className={`panel p-6 ${mustChange ? 'ring-4 ring-card' : ''}`} aria-labelledby="pw-title">
+      <h2 id="pw-title" className="flex items-center gap-2 text-xl font-bold">
+        <LockIcon className="text-pitch" /> {p.title}
+      </h2>
+      {mustChange && <p className="mt-2 rounded-xl bg-card/40 p-3 text-sm font-semibold text-ink">{p.mustChange}</p>}
+      <form onSubmit={submit} className="mt-4 grid gap-3">
+        <label className="label" htmlFor="pw-current">{p.current}</label>
+        <input id="pw-current" className="input" type="password" autoComplete="current-password" required maxLength={200} value={v.current} onChange={(e) => setV({ ...v, current: e.target.value })} />
+        <label className="label" htmlFor="pw-next">{p.next}</label>
+        <input id="pw-next" className="input" type="password" autoComplete="new-password" required minLength={12} maxLength={200} value={v.next} onChange={(e) => setV({ ...v, next: e.target.value })} />
+        <label className="label" htmlFor="pw-confirm">{p.confirm}</label>
+        <input id="pw-confirm" className="input" type="password" autoComplete="new-password" required maxLength={200} value={v.confirm} onChange={(e) => setV({ ...v, confirm: e.target.value })} />
+        <button type="submit" disabled={busy} className="btn-dark mt-2 justify-self-start">{p.save}</button>
+      </form>
       {msg && (
         <p role="status" className={`mt-4 rounded-xl p-3 text-sm font-semibold ${msg.ok ? 'bg-pitch/10 text-pitch-dark' : 'bg-red-50 text-red-800'}`}>
           {msg.text}
